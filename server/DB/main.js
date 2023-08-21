@@ -37,6 +37,10 @@ const UserSchema = new Schema({
   Category: {
     type: String,
   },
+
+  Income: {
+    type: String,
+  },
   BoardRollNo: {
     type: String,
   },
@@ -79,6 +83,10 @@ const UserSchema = new Schema({
     default: null,
   },
   PreviousTrade: {
+    type: String,
+    default: null,
+  },
+  Remarks: {
     type: String,
     default: null,
   },

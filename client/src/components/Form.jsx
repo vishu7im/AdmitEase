@@ -28,6 +28,8 @@ let initialValues = {
   prevAdmissionRollNo: "",
   prevTradeAndInstitute: "",
   Section: "",
+  income: "",
+  remarks: "",
 };
 
 let validationSchema = Yup.object({
@@ -109,6 +111,8 @@ const FormExample = () => {
       prevAdmissionRollNo,
       prevTradeAndInstitute,
       Section,
+      income,
+      remarks,
     } = values;
 
     const url = "http://localhost:8000/newUser";
@@ -143,6 +147,8 @@ const FormExample = () => {
       ParentsMobileNo: parentMobileNo,
       PreviousAdmissionNo: prevAdmissionRollNo,
       PreviousTrade: prevTradeAndInstitute,
+      Income: income,
+      Remarks: remarks,
     };
 
     try {
@@ -361,6 +367,22 @@ const FormExample = () => {
                   />
                 </div>
               </div>
+
+              <div className="flex flex-col">
+                <label
+                  htmlFor="income"
+                  className="text-sm font-medium text-gray-700 mb-1"
+                >
+                  Income (if TFW/BC)
+                </label>
+                <Field
+                  type="number"
+                  id="income"
+                  name="income"
+                  className="p-2 border rounded-md border-green-400 ring-green-300 focus:outline-none ring ring-opacity-40"
+                />
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex flex-col">
                   <label
@@ -637,6 +659,20 @@ const FormExample = () => {
                     className="p-2 border rounded-md border-green-400 ring-green-300 focus:outline-none ring ring-opacity-40"
                   />
                 </div>
+              </div>
+              <div className="flex flex-col">
+                <label
+                  htmlFor="remarks"
+                  className="text-sm font-medium text-gray-700 mb-1"
+                >
+                  Remarks (optional)
+                </label>
+                <Field
+                  type="text"
+                  id="remarks"
+                  name="remarks"
+                  className="p-2 border rounded-md border-green-400 ring-green-300 focus:outline-none ring ring-opacity-40"
+                />
               </div>
               <div className="flex items-center justify-end">
                 <button
