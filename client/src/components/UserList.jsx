@@ -1,11 +1,15 @@
 import { Box } from "@mui/material";
+import RemoveRedEyeIcon from "@mui/icons-material/RemoveRedEye";
 import { DataGrid } from "@mui/x-data-grid";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Team = () => {
   const [DataUser, setDataUser] = useState([]);
   const [selectedOption, setSelectedOption] = useState("Diploma Engg");
+
+  const navigate = useNavigate();
 
   const handleOptionChange = (option) => {
     setSelectedOption(option);
@@ -19,36 +23,53 @@ const Team = () => {
     } catch (error) {}
   };
 
-  //   const HandleView = (uuid) => {
-  //     navigate(`/admin/tempuser/${uuid}`);
-  //   };
+  const HandleView = (uuid, _id) => {
+    navigate(`/user/update/${_id}/${uuid}`);
+  };
 
   const columns = [
-    { field: "id", headerName: "Rank", cellClassName: "name-column--cell" },
+    {
+      field: "id",
+      headerName: "S NO",
+      cellClassName: "name-column--cell",
+      width: 10,
+    },
+    {
+      field: "Rank",
+      headerName: "Rank",
+      cellClassName: "name-column--cell",
+      width: 10,
+    },
+    {
+      field: "Registration",
+      headerName: "Registration",
+      cellClassName: "name-column--cell",
+      width: 100,
+    },
     {
       field: "Name",
       headerName: "Name",
-      flex: 1,
       cellClassName: "name-column--cell",
+      width: 120,
     },
     {
       field: "Course",
       headerName: "Course",
-      flex: 1,
       cellClassName: "name-column--cell",
+      width: 150,
     },
 
     {
       field: "Cateogry",
       headerName: "Cateogry",
-      flex: 1,
       cellClassName: "name-column--cell",
+      width: 100,
     },
     {
       field: "Gender",
       headerName: "Gender",
-      flex: 1,
       cellClassName: "name-column--cell",
+      width: 70,
     },
     {
       field: "DOB",
@@ -59,8 +80,8 @@ const Team = () => {
     {
       field: "Addhaar",
       headerName: "Addhaar",
-      flex: 1,
       cellClassName: "name-column--cell",
+      width: 140,
     },
     {
       field: "Percentage",
@@ -75,33 +96,30 @@ const Team = () => {
       cellClassName: "name-column--cell",
     },
 
-    // {
-    //   field: "view",
-    //   headerName: "View",
-    //   flex: 1,
-    //   renderCell: ({ row: { view } }) => {
-    //     return (
-    //       <Box
-    //         width="60%"
-    //         m="0 0"
-    //         p="5px"
-    //         display="flex"
-    //         justifyContent="center"
-    //         backgroundColor={"green"}
-    //         borderRadius="4px"
-    //         onClick={() => {
-    //           HandleView(view);
-    //         }}
-    //       >
-    //         {<RemoveRedEyeIcon />}
-
-    //         <Typography color="grey" sx={{ ml: "5px" }}>
-    //           {"View"}
-    //         </Typography>
-    //       </Box>
-    //     );
-    //   },
-    // },
+    {
+      field: "view",
+      headerName: "View",
+      flex: 1,
+      renderCell: ({ row }) => {
+        return (
+          <Box
+            width="60%"
+            className="cursor-pointer"
+            m="0 0"
+            p="5px"
+            display="flex"
+            justifyContent="center"
+            backgroundColor={"green"}
+            borderRadius="4px"
+            onClick={() => {
+              HandleView(row.view, row.Course);
+            }}
+          >
+            {<RemoveRedEyeIcon />}
+          </Box>
+        );
+      },
+    },
   ];
 
   useEffect(() => {

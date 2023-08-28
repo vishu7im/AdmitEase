@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Formik, Form, Field, ErrorMessage } from "formik";
 import * as Yup from "yup";
 import { useNavigate, useParams } from "react-router-dom";
@@ -6,13 +6,13 @@ import { AlertApi } from "../context/Alert";
 import axios from "axios";
 
 let initialValues = {
+  RegistrationNo: "",
   candidateName: "",
   fatherName: "",
   motherName: "",
   dateOfBirth: "",
   gender: "",
   familyId: "",
-  category: "",
   boardRollNo: "",
   boardName: "",
   marksObtained: "",
@@ -28,12 +28,14 @@ let initialValues = {
   prevAdmissionRollNo: "",
   prevTradeAndInstitute: "",
   Section: "",
-  income: "",
   remarks: "",
+  category: "",
+  income: "",
 };
 
 let validationSchema = Yup.object({
   candidateName: Yup.string().required("Candidate Name  is required"),
+  RegistrationNo: Yup.number().required("RegistrationNo   is required"),
   fatherName: Yup.string().required("fatherName Name  is required"),
   motherName: Yup.string().required("motherName Name  is required"),
   dateOfBirth: Yup.string().required("dateOfBirth Name  is required"),
@@ -43,10 +45,17 @@ let validationSchema = Yup.object({
   boardName: Yup.string().required("boardName Name  is required"),
   marksObtained: Yup.number().required("marksObtained Name  is required"),
   totalMarks: Yup.number().required("totalMarks Name  is required"),
-  aadhaarNo: Yup.number().required("aadhaarNo Name  is required"),
+  aadhaarNo: Yup.string().required("aadhaarNo Name  is required"),
   address: Yup.string().required("address Name  is required"),
-  studentMobileNo: Yup.number().required("studentMobileNo Name  is required"),
-  parentMobileNo: Yup.number().required("parentMobileNo Name  is required"),
+  studentMobileNo: Yup.number()
+    .required("Student Mobile Number is required")
+    .min(1000000000, "Mobile Number must be at least 10 digits")
+    .typeError("Invalid Mobile Number"),
+
+  parentMobileNo: Yup.number()
+    .required("Parent Mobile Number is required")
+    .min(1000000000, "Mobile Number must be at least 10 digits")
+    .typeError("Invalid Mobile Number"),
   gender: Yup.string().required("gender must be selected"),
 });
 
@@ -68,7 +77,20 @@ const FormExample = () => {
   const { setAlert } = AlertApi();
   const navigate = useNavigate();
 
+  const [category, setCategory] = useState("");
+
+  const handleCategoryChange = (event) => {
+    const selectedCategory = event.target.value;
+    setCategory(selectedCategory);
+  };
+
   const onSubmit = async (values, { setSubmitting, resetForm }) => {
+    if (values.category === "BCA/BCB" || values.category === "TFW") {
+      if (!values.income) {
+        setAlert({ type: "warning", message: "Income is required for TFW/BC" });
+        return;
+      }
+    }
     setSubmitting(true);
     if (_id === "Diploma Engg") {
       if (!values.mathMarks || !values.englishMarks || !values.physicsMarks) {
@@ -113,6 +135,7 @@ const FormExample = () => {
       Section,
       income,
       remarks,
+      RegistrationNo,
     } = values;
 
     const url = "http://localhost:8000/newUser";
@@ -149,6 +172,7 @@ const FormExample = () => {
       PreviousTrade: prevTradeAndInstitute,
       Income: income,
       Remarks: remarks,
+      RegistrationNo: RegistrationNo,
     };
 
     try {
@@ -185,8 +209,27 @@ const FormExample = () => {
           validationSchema={validationSchema}
           onSubmit={onSubmit}
         >
-          {({ values, isSubmitting }) => (
+          {({ values, isSubmitting, handleChange }) => (
             <Form className="space-y-6">
+              <div className="flex flex-col">
+                <label
+                  htmlFor="RegistrationNo"
+                  className="text-sm font-medium text-gray-700 mb-1"
+                >
+                  Registration No
+                </label>
+                <Field
+                  type="number"
+                  id="RegistrationNo"
+                  name="RegistrationNo"
+                  className="p-2 border rounded-md border-green-400 ring-green-300 focus:outline-none ring ring-opacity-40"
+                />
+                <ErrorMessage
+                  name="RegistrationNo"
+                  component="div"
+                  className="text-red-500"
+                />
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="flex flex-col">
                   <label
@@ -255,7 +298,7 @@ const FormExample = () => {
                     Date of Birth
                   </label>
                   <Field
-                    type="date"
+                    type="text"
                     id="dateOfBirth"
                     name="dateOfBirth"
                     className="p-2 border rounded-md border-green-400 ring-green-300 focus:outline-none ring ring-opacity-40"
@@ -320,7 +363,7 @@ const FormExample = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="flex flex-col">
                   <label
                     htmlFor="familyId"
@@ -352,6 +395,10 @@ const FormExample = () => {
                     id="category"
                     name="category"
                     className="p-2 border rounded-md border-green-400 ring-green-300 focus:outline-none ring ring-opacity-40"
+                    onChange={(e) => {
+                      handleCategoryChange(e);
+                      handleChange(e);
+                    }}
                   >
                     <option value="">Select Category</option>
                     {categoryOptions.map((category) => (
@@ -366,21 +413,28 @@ const FormExample = () => {
                     className="text-red-500"
                   />
                 </div>
-              </div>
-
-              <div className="flex flex-col">
-                <label
-                  htmlFor="income"
-                  className="text-sm font-medium text-gray-700 mb-1"
-                >
-                  Income (if TFW/BC)
-                </label>
-                <Field
-                  type="number"
-                  id="income"
-                  name="income"
-                  className="p-2 border rounded-md border-green-400 ring-green-300 focus:outline-none ring ring-opacity-40"
-                />
+                <div className="flex flex-col">
+                  <label
+                    htmlFor="income"
+                    className="text-sm font-medium text-gray-700 mb-1"
+                  >
+                    Income
+                  </label>
+                  <Field
+                    type="number"
+                    id="income"
+                    name="income"
+                    className={`p-2 border rounded-md ${
+                      ["TFW", "BCA/BCB"].includes(category) ? "" : "bg-red-200"
+                    } border-green-400 ring-green-300 focus:outline-none ring ring-opacity-40`}
+                    disabled={!["TFW", "BCA/BCB"].includes(category)}
+                  />
+                  <ErrorMessage
+                    name="income"
+                    component="div"
+                    className="text-red-500"
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -513,7 +567,7 @@ const FormExample = () => {
                       htmlFor="physicsMarks"
                       className="text-sm font-medium text-gray-700 mb-1"
                     >
-                      Physics Marks
+                      Science Marks
                     </label>
                     <Field
                       type="number"
@@ -559,7 +613,7 @@ const FormExample = () => {
                     Aadhaar No
                   </label>
                   <Field
-                    type="number"
+                    type="text"
                     id="aadhaarNo"
                     name="aadhaarNo"
                     className="p-2 border rounded-md border-green-400 ring-green-300 focus:outline-none ring ring-opacity-40"

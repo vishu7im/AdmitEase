@@ -18,6 +18,21 @@ app.get("/", (req, res) => {
   res.send("server vishal");
 });
 
+// Compare by age (DOB in ascending order)
+const parseDate = (dateString) => {
+  const parts = dateString.split(/[\/-]/);
+  if (parts.length === 3) {
+    if (parts[0].length === 4) {
+      // Format: yyyy-mm-dd
+      return new Date(dateString);
+    } else {
+      // Format: dd/mm/yyyy
+      return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+    }
+  }
+  return new Date(dateString);
+};
+
 app.post("/newUser", async (req, res) => {
   const input = req.body;
   // console.log(input);
@@ -111,9 +126,24 @@ app.post("/Report", async (req, res) => {
 
     const results = await User.find(query).sort({ Percentage: -1 }).lean();
 
+    //  merge for catogry 
+
+let mergedMap = {}
+
+  results.map((item)=>{
+    if (!mergedMap[item.RegistrationNo]) {
+      mergedMap[item.RegistrationNo] = { ...item };
+    } else {
+      mergedMap[item.RegistrationNo].Category += '/' + item.Category;
+    }
+  })
+
+  const expected = Object.values(mergedMap)
+
+
     let studentsData;
     if (DET === 1 && DAT === 0) {
-      studentsData = results.map((data) => {
+      studentsData = expected.map((data) => {
         delete data.__v;
         delete data._id;
         delete data.Math;
@@ -128,9 +158,9 @@ app.post("/Report", async (req, res) => {
         if (b.Percentage !== a.Percentage) {
           return b.Percentage - a.Percentage;
         }
-        // Compare by age (DOB in ascending order)
-        const dobA = new Date(a.DOB.split("/").reverse().join("/"));
-        const dobB = new Date(b.DOB.split("/").reverse().join("/"));
+        const dobA = parseDate(a.DOB);
+        const dobB = parseDate(b.DOB);
+
         if (dobA.getTime() !== dobB.getTime()) {
           return dobA.getTime() - dobB.getTime();
         }
@@ -139,15 +169,22 @@ app.post("/Report", async (req, res) => {
         return a.Name.localeCompare(b.Name);
       });
     } else if (DAT === 1 && DET === 0) {
-      studentsData = results.map((data) => {
+      studentsData = expected.map((data) => {
         delete data.__v;
         delete data._id;
         delete data.Qualification;
+        data.science = data.Physics;
+        delete data.Physics;
+        data.math = data.Math;
+        delete data.Math;
+        data.english = data.English;
+        delete data.English;
 
         return data;
       });
 
       studentsData.sort((a, b) => {
+
         // First, compare by percentage in descending order
         if (b.Percentage !== a.Percentage) {
           return b.Percentage - a.Percentage;
@@ -168,23 +205,35 @@ app.post("/Report", async (req, res) => {
           return b.English - a.English;
         }
 
-        // Compare by age (DOB in ascending order)
-        const dobA = new Date(a.DOB);
-        const dobB = new Date(b.DOB);
+        const dobA = parseDate(a.DOB);
+        const dobB = parseDate(b.DOB);
+
         if (dobA.getTime() !== dobB.getTime()) {
           return dobA.getTime() - dobB.getTime();
         }
-
         // Finally, compare alphabetically by name
         return a.Name.localeCompare(b.Name);
       });
     }
 
-    //  setup rank
+
+    if (DET === 1 && DAT === 0) { 
+ //  setup rank
     studentsData = studentsData.map((data, i) => {
-      data.Rank = i + 1;
+      data.Rank = "L"+(parseInt(i) + parseInt(1));
+
       return data;
     });
+    } else if (DET === 0 && DAT === 1) { 
+ //  setup rank
+    studentsData = studentsData.map((data, i) => {
+      data.Rank = "D"+(parseInt(i) + parseInt(1));
+
+      return data;
+    });
+    }
+
+   
 
     // rule function
 
@@ -201,7 +250,7 @@ app.post("/Report", async (req, res) => {
       TFW === 1 ? "-TFW" : ""
     }${EWS === 1 ? "-EWS" : ""}${PM_Care === 1 ? "-PM_Care" : ""}${
       HARIHAR === 1 ? "-HARIHAR" : ""
-    }${OTHER === 1 ? "-OTHER" : ""}.xlsx`;
+    }${OTHER === 1 ? "-OTHER" : ""}-${Date.now()}.xlsx`;
 
     fs.writeFile(filePath, buffer, (err) => {
       if (err) {
@@ -221,6 +270,39 @@ app.post("/Report", async (req, res) => {
   }
 });
 
+app.post("/UpdateUser", async (req, res) => {
+  const input = req.body;
+
+  try {
+    await User.findByIdAndUpdate({ _id: input.uuid }, input);
+    res.status(200).json({ data: "success" });
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+});
+
+app.post("/deleteUser", async (req, res) => {
+  const { uuid } = req.body;
+
+  try {
+    const data = await User.findByIdAndDelete({ _id: uuid });
+    res.status(200).json({ data: data });
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+});
+
+app.get("/fetchSingle/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const data = await User.findOne({ _id: id });
+    res.status(200).json({ data: data });
+  } catch (error) {
+    res.status(500).json({ error: "An error occurred" });
+  }
+});
+
 app.get("/userlist/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -234,7 +316,6 @@ app.get("/userlist/:id", async (req, res) => {
     if (id === "Diploma Engg") {
       studentsData = results.map((data) => {
         delete data.__v;
-        delete data._id;
         delete data.Math;
         delete data.Physics;
         delete data.English;
@@ -247,9 +328,9 @@ app.get("/userlist/:id", async (req, res) => {
         if (b.Percentage !== a.Percentage) {
           return b.Percentage - a.Percentage;
         }
-        // Compare by age (DOB in ascending order)
-        const dobA = new Date(a.DOB.split("/").reverse().join("/"));
-        const dobB = new Date(b.DOB.split("/").reverse().join("/"));
+        const dobA = parseDate(a.DOB);
+        const dobB = parseDate(b.DOB);
+
         if (dobA.getTime() !== dobB.getTime()) {
           return dobA.getTime() - dobB.getTime();
         }
@@ -260,7 +341,6 @@ app.get("/userlist/:id", async (req, res) => {
     } else if (id === "Diploma Engg Lateral Entry") {
       studentsData = results.map((data) => {
         delete data.__v;
-        delete data._id;
         delete data.Qualification;
 
         return data;
@@ -287,9 +367,9 @@ app.get("/userlist/:id", async (req, res) => {
           return b.English - a.English;
         }
 
-        // Compare by age (DOB in ascending order)
-        const dobA = new Date(a.DOB);
-        const dobB = new Date(b.DOB);
+        const dobA = parseDate(a.DOB);
+        const dobB = parseDate(b.DOB);
+
         if (dobA.getTime() !== dobB.getTime()) {
           return dobA.getTime() - dobB.getTime();
         }
@@ -299,10 +379,15 @@ app.get("/userlist/:id", async (req, res) => {
       });
     }
 
-    //  setup rank
-    let studentsListData = studentsData.map((data, i) => {
+    let studentsListData
+    if (id === "Diploma Engg Lateral Entry") { 
+      //  setup rank
+         //  setup rank
+     studentsListData = studentsData.map((data, i) => {
       let obj = {
-        id: i + 1,
+        id: (parseInt(i) + parseInt(1)),
+        Rank: "L"+(parseInt(i) + parseInt(1)),
+        Registration: data.RegistrationNo,
         Name: data.Name,
         Course: data.Course,
         Cateogry: data.Category,
@@ -311,10 +396,34 @@ app.get("/userlist/:id", async (req, res) => {
         Addhaar: data.AadhaarNo,
         Percentage: data.Percentage,
         Mobile: data.StudentMobileNo,
+        view: data._id,
       };
 
       return obj;
     });
+         } else if (id === "Diploma Engg") { 
+      //  setup rank
+      studentsListData = studentsData.map((data, i) => {
+        let obj = {
+          id: i + 1,
+          Rank: "D"+(parseInt(i) + parseInt(1)),
+          Registration: data.RegistrationNo,
+          Name: data.Name,
+          Course: data.Course,
+          Cateogry: data.Category,
+          Gender: data.Gender,
+          DOB: data.DOB,
+          Addhaar: data.AadhaarNo,
+          Percentage: data.Percentage,
+          Mobile: data.StudentMobileNo,
+          view: data._id,
+        };
+  
+        return obj;
+      });
+         }
+     
+  
     res.status(200).json({ data: studentsListData });
   } catch (error) {
     res.status(500).json({ error: "An error occurred" });

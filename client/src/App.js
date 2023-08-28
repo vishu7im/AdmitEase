@@ -7,6 +7,7 @@ import Report from "./components/Report";
 import FormExample from "./components/Form";
 import "./app.css";
 import UserList from "./components/UserList";
+import UpdateAndDeleteForm from "./components/UpdateAndDeleteForm";
 function App() {
   return (
     <>
@@ -18,6 +19,10 @@ function App() {
             <Route path="/form/:_id" element={<FormExample />} />
             <Route path="/report" element={<Report />} />
             <Route path="/userlist" element={<UserList />} />
+            <Route
+              path="//user/update/:_id/:uuid"
+              element={<UpdateAndDeleteForm />}
+            />
 
             {/* Admin */}
           </Routes>

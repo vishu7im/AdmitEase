@@ -12,6 +12,10 @@ const UserSchema = new Schema({
     type: String,
     required: true,
   },
+  RegistrationNo: {
+    type: Number,
+    required: true,
+  },
   Qualification: {
     type: String,
   },
