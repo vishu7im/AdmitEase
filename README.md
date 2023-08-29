@@ -1,4 +1,4 @@
-```markdown
+
 # AdmitEase: Automated College Admission System
 
 Welcome to the AdmitEase project repository! This system, developed using the MERN stack, aims to revolutionize the traditional manual college admission counseling process, streamlining data management, ranking, and reporting
@@ -93,4 +93,3 @@ We welcome contributions to improve AdmitEase. To contribute:
 This project is licensed under the [MIT License](LICENSE).
 
 Feel free to explore, modify, and enhance the project to meet your needs. Happy coding!
-```
